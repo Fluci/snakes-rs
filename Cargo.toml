@@ -1,0 +1,8 @@
+[package]
+name = "snakes"
+version = "0.1.0"
+authors = ["Felice Serena <felice@serena-mueller.ch>"]
+edition = "2018"
+
+[dependencies]
+termion = "1.5.1"
