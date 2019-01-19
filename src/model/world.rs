@@ -14,26 +14,32 @@ pub struct World {
     pub snakes: Vec<Snake>,
     pub grid: Grid<Cell>,
     events: Vec<GameEvent>,
-    pendingGrowth: usize,
     availableSnacks: usize,
     pub wallCollision: bool
 }
 
 impl World {
-    pub fn with_size(rows: usize, cols: usize) -> World {
-        debug_assert!(1 <= rows);
-        debug_assert!(2 <= cols);
+    pub fn new(rows: usize, cols: usize, snakes: usize) -> World {
+        debug_assert!(2 <= rows);
+        debug_assert!(1 <= cols);
+        debug_assert!(2*snakes < cols);
         let mut grid = Grid::from_elem(Cell::Empty, rows, cols);
-        grid.set((0,0), Cell::Snake(0, Orientation::Down));
-        grid.set((0,1), Cell::Snake(0, Orientation::Left));
+        let mut snakes_vec = Vec::new();
+        for i in 0..snakes {
+            snakes_vec.push(Snake::new((1, 2*i), (0, 2*i)));
+            grid.set(snakes_vec[i].head, Cell::Snake(0, Orientation::Down));
+            grid.set(snakes_vec[i].tail, Cell::Snake(0, Orientation::Down));
+        }
         World {
-            snakes: vec![Snake{head: (0,0), tail: (0,1)}],
+            snakes: snakes_vec,
             grid: grid,
             events: Vec::new(),
-            pendingGrowth: 1,
             availableSnacks: 0,
             wallCollision: false
         }
+    }
+    pub fn player_count(&self) -> usize {
+        self.snakes.len()
     }
     pub fn snake_direction<P: Position + Copy>(&self, pos: P) -> Orientation {
         match self.grid.get(pos) {
@@ -67,9 +73,11 @@ impl World {
         self.availableSnacks += 1;
         Ok(())
     }
-    pub fn advance(&mut self, direction: Orientation) -> Vec<GameEvent> {
+    pub fn advance(&mut self, directions: &Vec<Orientation>) -> Vec<GameEvent> {
         self.events.clear();
-        self.advance_snake(0, direction);
+        for i in 0..self.snakes.len() {
+            self.advance_snake(i, directions[i]);
+        }
         let mut events = Vec::new();
         mem::swap(&mut self.events, &mut events);
         events
@@ -104,7 +112,7 @@ impl World {
             Cell::Food(growth_value) => {
                 self.events.push(GameEvent::FoodConsumed(s, *growth_value));
                 self.availableSnacks -= 1; 
-                self.pendingGrowth += *growth_value},
+                snake.pendingGrowth += *growth_value},
             Cell::Empty => (),
             Cell::Snake(_,_) => {
                 self.events.push(GameEvent::Collision(s, head_posi));
@@ -123,7 +131,7 @@ impl World {
         self.grid.set(snake.head, Cell::Snake(s, direction));
 
         // update tail position if no longer growing
-        if self.pendingGrowth == 0 {
+        if snake.pendingGrowth == 0 {
             let move_tail = self.move_vector(self.snake_direction(snake.tail));
             // mod calculation for !wallCollision
             let tail_pos = (((self.grid.rows() + snake.tail.row()) as isize + move_tail.0) as usize % self.grid.rows(), ((self.grid.rows() + snake.tail.col()) as isize + move_tail.1) as usize % self.grid.rows());
@@ -133,7 +141,7 @@ impl World {
             snake.tail = tail_pos;
             self.grid.set(snake.tail, Cell::Snake(s, next_direction));
         } else {
-            self.pendingGrowth -= 1;
+            snake.pendingGrowth -= 1;
         }
         self.snakes[s] = snake;
         debug_assert!(match self.grid.get(self.snakes[s].head) {Cell::Snake(ss, _) => *ss == s, _ => false});

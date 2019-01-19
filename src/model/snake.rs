@@ -7,7 +7,18 @@ type Pos = (usize, usize);
 #[derive(Debug, Clone, Copy)]
 pub struct Snake {
     pub head: Pos,
-    pub tail: Pos
+    pub tail: Pos,
+    pub pendingGrowth: usize
+}
+
+impl Snake {
+    pub fn new(head: Pos, tail: Pos) -> Snake {
+        Snake {
+            head: head,
+            tail: tail,
+            pendingGrowth: 0
+        }
+    }
 }
 
 impl fmt::Display for Snake{

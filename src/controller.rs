@@ -9,7 +9,7 @@ pub trait View {
 
 pub enum UserAction {
     Quit,
-    Player(i32, Orientation)
+    Player(usize, Orientation)
 }
 
 pub struct Controller<V: View + Sized> {
@@ -20,9 +20,9 @@ pub struct Controller<V: View + Sized> {
 
 
 impl<V: View + Sized> Controller<V> {
-    pub fn with_size(rows: usize, cols: usize, view: V) -> Controller<V> {
+    pub fn new(world: World, view: V) -> Controller<V> {
         Controller {
-            world: World::with_size(rows, cols),
+            world: world,
             view: view,
             iteration: 0
         }
@@ -31,8 +31,11 @@ impl<V: View + Sized> Controller<V> {
         self.view.read_user_inputs(); // drop any user input
         self.view.draw_world(&self.world);
         thread::sleep(time::Duration::from_millis(1000/1));
+        let mut directions = vec![Orientation::Down; self.world.player_count()];
         loop{
-            let mut direction = self.world.snake_direction(self.world.snakes[0].head);
+            for i in 0..self.world.player_count() {
+                directions[i] = self.world.snake_direction(self.world.snakes[i].head);
+            }
             let actions = self.view.read_user_inputs();
             if self.iteration % 8 == 0 {
                 self.world.place_snack((4,4), 1);
@@ -40,11 +43,11 @@ impl<V: View + Sized> Controller<V> {
             for a in actions {
                 match a {
                     UserAction::Quit => return,
-                    UserAction::Player(_pid, dir) => direction = dir
+                    UserAction::Player(pid, dir) => directions[pid] = dir
                 }
             }
             // Physics
-            self.world.advance(direction);
+            self.world.advance(&directions);
             // Display on screen
             self.view.draw_world(&self.world);
             thread::sleep(time::Duration::from_millis(1000/2));

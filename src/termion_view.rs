@@ -22,7 +22,7 @@ impl TermionView {
 
 impl View for TermionView {
     fn read_user_inputs(&mut self) -> Vec<UserAction> {
-        let mut direction: Option<Orientation> = None;
+        let mut dirs: Vec<Option<Orientation>> = vec![None; 2];
         let mut quit = false;
         // User input
         loop {
@@ -30,10 +30,14 @@ impl View for TermionView {
             match event {
                 None => break,
                 Some(Ok(Event::Key(e))) => match e {
-                    Key::Left => direction = Some(Orientation::Left),
-                    Key::Right => direction = Some(Orientation::Right),
-                    Key::Up => direction = Some(Orientation::Up),
-                    Key::Down => direction = Some(Orientation::Down),
+                    Key::Left => dirs[0] = Some(Orientation::Left),
+                    Key::Right => dirs[0] = Some(Orientation::Right),
+                    Key::Up => dirs[0] = Some(Orientation::Up),
+                    Key::Down => dirs[0] = Some(Orientation::Down),
+                    Key::Char('a') => dirs[1] = Some(Orientation::Left),
+                    Key::Char('d') => dirs[1] = Some(Orientation::Right),
+                    Key::Char('w') => dirs[1] = Some(Orientation::Up),
+                    Key::Char('s') => dirs[1] = Some(Orientation::Down),
                     Key::Char('q') => quit = true,
                     Key::Char(_) => (),
                     _ => (),
@@ -42,8 +46,10 @@ impl View for TermionView {
             };
         };
         let mut result = Vec::new();
-        if direction.is_some() {
-            result.push(UserAction::Player(0, direction.unwrap()));
+        for i in 0..dirs.len() {
+            if dirs[i].is_some() {
+                result.push(UserAction::Player(i, dirs[i].unwrap()));
+            }
         }
         if quit {
             result.push(UserAction::Quit);
