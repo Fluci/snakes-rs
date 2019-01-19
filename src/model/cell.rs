@@ -5,7 +5,7 @@ use super::{Orientation};
 #[derive(Debug, Clone, Copy)]
 pub enum Cell {
     Empty,
-    Food(usize),
+    Food(usize), // growth value
     Stone(usize),
     Snake(usize, Orientation)
 }

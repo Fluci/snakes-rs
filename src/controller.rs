@@ -14,7 +14,8 @@ pub enum UserAction {
 
 pub struct Controller<V: View + Sized> {
     world: World,
-    view: V
+    view: V,
+    iteration: usize
 }
 
 
@@ -22,7 +23,8 @@ impl<V: View + Sized> Controller<V> {
     pub fn with_size(rows: usize, cols: usize, view: V) -> Controller<V> {
         Controller {
             world: World::with_size(rows, cols),
-            view: view
+            view: view,
+            iteration: 0
         }
     }
     pub fn run_loop(&mut self){
@@ -32,6 +34,9 @@ impl<V: View + Sized> Controller<V> {
         loop{
             let mut direction = self.world.snake_direction(self.world.snakes[0].head);
             let actions = self.view.read_user_inputs();
+            if self.iteration % 8 == 0 {
+                self.world.place_snack((4,4), 1);
+            }
             for a in actions {
                 match a {
                     UserAction::Quit => return,
@@ -43,6 +48,7 @@ impl<V: View + Sized> Controller<V> {
             // Display on screen
             self.view.draw_world(&self.world);
             thread::sleep(time::Duration::from_millis(1000/2));
+            self.iteration += 1;
         } 
     }
 }

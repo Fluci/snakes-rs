@@ -60,7 +60,11 @@ impl View for TermionView {
                     Cell::Empty => write!(self.stdout, "_").unwrap(),
                     Cell::Food(_) => write!(self.stdout, "F").unwrap(),
                     Cell::Stone(_) => write!(self.stdout, "R").unwrap(),
-                    Cell::Snake(_, _) => write!(self.stdout, "S").unwrap()
+                    Cell::Snake(s, _) => {
+                        if world.is_head(*s, (row, col)) {write!(self.stdout, "o").unwrap();}
+                        else if world.is_tail(*s, (row, col)) {write!(self.stdout, "-").unwrap();}
+                        else if world.is_body(*s, (row, col)) {write!(self.stdout, "=").unwrap();}
+                    }
                 };
             }
         }
