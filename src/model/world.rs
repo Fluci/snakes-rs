@@ -1,5 +1,7 @@
 use std::mem;
 
+use rand::Rng;
+
 use crate::model::*;
 use grid::Grid;
 
@@ -14,8 +16,8 @@ pub struct World {
     pub snakes: Vec<Snake>,
     pub grid: Grid<Cell>,
     events: Vec<GameEvent>,
-    availableSnacks: usize,
-    pub wallCollision: bool
+    available_snacks: usize,
+    pub wall_collision: bool
 }
 
 impl World {
@@ -26,17 +28,20 @@ impl World {
         let mut grid = Grid::from_elem(Cell::Empty, rows, cols);
         let mut snakes_vec = Vec::new();
         for i in 0..snakes {
-            snakes_vec.push(Snake::new((1, 2*i), (0, 2*i)));
-            grid.set(snakes_vec[i].head, Cell::Snake(0, Orientation::Down));
-            grid.set(snakes_vec[i].tail, Cell::Snake(0, Orientation::Down));
+            snakes_vec.push(Snake::new((1, 4*i), (0, 4*i)));
+            grid.set(snakes_vec[i].head, Cell::Snake(i, Orientation::Down));
+            grid.set(snakes_vec[i].tail, Cell::Snake(i, Orientation::Down));
         }
         World {
             snakes: snakes_vec,
             grid: grid,
             events: Vec::new(),
-            availableSnacks: 0,
-            wallCollision: false
+            available_snacks: 0,
+            wall_collision: false
         }
+    }
+    pub fn available_snacks(&self) -> usize {
+        self.available_snacks
     }
     pub fn player_count(&self) -> usize {
         self.snakes.len()
@@ -61,6 +66,18 @@ impl World {
         (vertical, horizontal)
         
     }
+    pub fn place_snack_randomly(&mut self, growth_value: usize) -> Result<(), ()> {
+        let mut rng = rand::thread_rng();
+        for _ in 0..100 {
+            let row = rng.gen_range(0, self.grid.rows());
+            let col = rng.gen_range(0, self.grid.cols());
+            match self.place_snack((row, col), growth_value) {
+                Ok(_) => return Ok(()),
+                _ => ()
+            };
+        }
+        return Err(());
+    }
     pub fn place_snack<P: Position + Copy>(&mut self, pos: P, growth_value: usize) -> Result<(), ()> {
         if !match self.grid.get(pos) {
             Cell::Empty => true,
@@ -70,7 +87,7 @@ impl World {
         }
         // place snack
         self.grid.set(pos, Cell::Food(growth_value));
-        self.availableSnacks += 1;
+        self.available_snacks += 1;
         Ok(())
     }
     pub fn advance(&mut self, directions: &Vec<Orientation>) -> Vec<GameEvent> {
@@ -97,7 +114,7 @@ impl World {
         direction = self.check_direction(s, direction);
         let move_head = self.move_vector(direction);
         let mut head_posi = ((snake.head.row() as isize + move_head.0), (snake.head.col() as isize + move_head.1));
-        if !self.wallCollision {
+        if !self.wall_collision {
             head_posi.0 = (self.grid.rows() as isize + head_posi.0) % self.grid.rows() as isize;
             head_posi.1 = (self.grid.cols() as isize + head_posi.1) % self.grid.cols() as isize;
         }
@@ -111,11 +128,16 @@ impl World {
         match self.grid.get(head_pos) {
             Cell::Food(growth_value) => {
                 self.events.push(GameEvent::FoodConsumed(s, *growth_value));
-                self.availableSnacks -= 1; 
-                snake.pendingGrowth += *growth_value},
+                self.available_snacks -= 1; 
+                snake.pending_growth += *growth_value},
             Cell::Empty => (),
-            Cell::Snake(_,_) => {
+            Cell::Snake(os,_) => {
                 self.events.push(GameEvent::Collision(s, head_posi));
+                // if the other snake was already moved, and we collide with its head, it's also a
+                // collision for the other snake
+                if self.is_head(*os, head_pos) && *os < s {
+                    self.events.push(GameEvent::Collision(*os, (snake.head.0 as isize, snake.head.1 as isize)));
+                }
                 return;
             },
             Cell::Stone(_) => {
@@ -131,9 +153,9 @@ impl World {
         self.grid.set(snake.head, Cell::Snake(s, direction));
 
         // update tail position if no longer growing
-        if snake.pendingGrowth == 0 {
+        if snake.pending_growth == 0 {
             let move_tail = self.move_vector(self.snake_direction(snake.tail));
-            // mod calculation for !wallCollision
+            // mod calculation for !wall_collision
             let tail_pos = (((self.grid.rows() + snake.tail.row()) as isize + move_tail.0) as usize % self.grid.rows(), ((self.grid.rows() + snake.tail.col()) as isize + move_tail.1) as usize % self.grid.rows());
             let next_direction = self.snake_direction(tail_pos);
             debug_assert!(match self.grid.get(tail_pos) {Cell::Snake(..) => true, _ => false});
@@ -141,7 +163,7 @@ impl World {
             snake.tail = tail_pos;
             self.grid.set(snake.tail, Cell::Snake(s, next_direction));
         } else {
-            snake.pendingGrowth -= 1;
+            snake.pending_growth -= 1;
         }
         self.snakes[s] = snake;
         debug_assert!(match self.grid.get(self.snakes[s].head) {Cell::Snake(ss, _) => *ss == s, _ => false});

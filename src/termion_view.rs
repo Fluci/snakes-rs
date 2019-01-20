@@ -4,6 +4,7 @@ use crate::model::*;
 use termion::event::*;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
+use termion::{color};
 use std::io::{Write, stdout, Stdout};
 
 pub struct TermionView {
@@ -56,6 +57,12 @@ impl View for TermionView {
         }
         result
     }
+    fn player_wins(&mut self, player: usize, world: &World) {
+        write!(self.stdout, "{}Player {} wins!\n\r", termion::cursor::Goto(1, 1 + world.grid.rows() as u16 ), player+1).unwrap();
+    }
+    fn draw(&mut self, world: &World) {
+        write!(self.stdout, "{}Draw!\n\r", termion::cursor::Goto(1, 1 + world.grid.rows() as u16)).unwrap();
+    }
     fn draw_world(&mut self, world: &World) {
         write!(self.stdout, "{}", termion::clear::All).unwrap();
         
@@ -64,17 +71,26 @@ impl View for TermionView {
                 write!(self.stdout, "{}", termion::cursor::Goto((col+1) as u16, (row+1) as u16)).unwrap();
                 match world.grid.get((row, col)) {
                     Cell::Empty => write!(self.stdout, "_").unwrap(),
-                    Cell::Food(_) => write!(self.stdout, "F").unwrap(),
-                    Cell::Stone(_) => write!(self.stdout, "R").unwrap(),
+                    Cell::Food(1) => write!(self.stdout, "'").unwrap(),
+                    Cell::Food(2) => write!(self.stdout, "^").unwrap(),
+                    Cell::Food(_) => write!(self.stdout, "A").unwrap(),
+                    Cell::Stone(_) => write!(self.stdout, "!").unwrap(),
                     Cell::Snake(s, _) => {
+                        match *s {
+                            0 => write!(self.stdout, "{}", color::Fg(color::Blue)).unwrap(),
+                            1 => write!(self.stdout, "{}", color::Fg(color::Green)).unwrap(),
+                            _ => write!(self.stdout, "{}", color::Fg(color::White)).unwrap()
+                        };
                         if world.is_head(*s, (row, col)) {write!(self.stdout, "o").unwrap();}
-                        else if world.is_tail(*s, (row, col)) {write!(self.stdout, "-").unwrap();}
+                        else if world.is_tail(*s, (row, col)) {write!(self.stdout, ".").unwrap();}
                         else if world.is_body(*s, (row, col)) {write!(self.stdout, "=").unwrap();}
+                        write!(self.stdout, "{}", color::Fg(color::White)).unwrap();
                     }
                 };
             }
         }
-        
+
+        write!(self.stdout, "{}", termion::cursor::Goto( 1, 1 + world.grid.rows() as u16 )).unwrap();
         self.stdout.flush().unwrap();
     }
 }
