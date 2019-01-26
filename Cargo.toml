@@ -9,7 +9,7 @@ name = "gridsnakes"
 path = "src/grid/lib.rs"
 
 [[bin]]
-name = "playsnakes"
+name = "play"
 path = "src/play/main.rs"
 
 [dependencies]

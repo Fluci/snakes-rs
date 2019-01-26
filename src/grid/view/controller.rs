@@ -1,5 +1,6 @@
 use std::{thread, time};
-use gridsnakes::{Game, TurnResult, PlayerInput, World};
+
+use crate::model::{Game, TurnResult, PlayerInput, World};
 
 
 pub trait View {

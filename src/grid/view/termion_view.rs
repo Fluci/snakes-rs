@@ -1,5 +1,6 @@
-use crate::controller::{View, UserAction};
-use gridsnakes::*;
+use crate::model::*;
+
+use super::controller::{View, UserAction};
 
 use termion::event::*;
 use termion::input::TermRead;
