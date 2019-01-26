@@ -12,4 +12,5 @@ pub use position::*;
 pub use snake::*;
 pub use world::*;
 pub use game::*;
+pub use grid::*;
 

@@ -1,13 +1,13 @@
 extern crate termion;
 extern crate rand;
+extern crate gridsnakes;
 
 mod controller;
-mod model;
 mod termion_view;
 
 use controller::Controller;
 use termion_view::TermionView;
-use model::{Game, World};
+use gridsnakes::{Game, World};
 
 
 fn main() {

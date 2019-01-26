@@ -1,4 +1,4 @@
-use crate::model::{World, Orientation, GameEvent};
+use super::{World, Orientation, GameEvent};
 
 #[derive(Debug, Clone, Copy)]
 pub enum PlayerInput {

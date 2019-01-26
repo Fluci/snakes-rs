@@ -2,8 +2,7 @@ use std::mem;
 
 use rand::Rng;
 
-use crate::model::*;
-use grid::Grid;
+use super::{Grid, Cell, Snake, tuple_from_position, Position, Orientation};
 
 pub type Player = usize;
 
