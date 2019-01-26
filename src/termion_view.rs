@@ -9,21 +9,33 @@ use std::io::{Write, stdout, Stdout};
 
 pub struct TermionView {
     events: termion::input::Events<termion::AsyncReader>,
-    stdout: termion::raw::RawTerminal<Stdout>
+    stdout: termion::raw::RawTerminal<Stdout>,
+    players: usize
 }
 
 impl TermionView {
     pub fn new() -> TermionView {
         TermionView {
             events: termion::async_stdin().events(),
-            stdout: stdout().into_raw_mode().unwrap()
+            stdout: stdout().into_raw_mode().unwrap(),
+            players: 2
+        }
+    }
+}
+
+impl TermionView {
+    fn player_color(&mut self, player: usize) {
+        match player {
+            0 => write!(self.stdout, "{}", color::Fg(color::Blue)).unwrap(),
+            1 => write!(self.stdout, "{}", color::Fg(color::Green)).unwrap(),
+            _ => write!(self.stdout, "{}", color::Fg(color::Reset)).unwrap()
         }
     }
 }
 
 impl View for TermionView {
     fn read_user_inputs(&mut self) -> Vec<UserAction> {
-        let mut dirs: Vec<Option<Orientation>> = vec![None; 2];
+        let mut dirs: Vec<Option<Orientation>> = vec![None; self.players];
         let mut quit = false;
         // User input
         loop {
@@ -49,7 +61,7 @@ impl View for TermionView {
         let mut result = Vec::new();
         for i in 0..dirs.len() {
             if dirs[i].is_some() {
-                result.push(UserAction::Player(i, dirs[i].unwrap()));
+                result.push(UserAction::Player(i, PlayerInput::Go(dirs[i].unwrap())));
             }
         }
         if quit {
@@ -57,8 +69,13 @@ impl View for TermionView {
         }
         result
     }
-    fn player_wins(&mut self, player: usize, world: &World) {
-        write!(self.stdout, "{}Player {} wins!\n\r", termion::cursor::Goto(1, 1 + world.grid.rows() as u16 ), player+1).unwrap();
+    fn player_wins(&mut self, winners: Vec<usize>, world: &World) {
+        write!(self.stdout, "{}", termion::cursor::Goto(1, 1 + world.grid.rows() as u16 )).unwrap();
+        self.player_color(winners[0]);
+        write!(self.stdout, "Player {} wins!{}\n\r", 
+            winners[0]+1, 
+            color::Fg(color::Reset)
+        ).unwrap();
     }
     fn draw(&mut self, world: &World) {
         write!(self.stdout, "{}Draw!\n\r", termion::cursor::Goto(1, 1 + world.grid.rows() as u16)).unwrap();
@@ -76,15 +93,11 @@ impl View for TermionView {
                     Cell::Food(_) => write!(self.stdout, "A").unwrap(),
                     Cell::Stone(_) => write!(self.stdout, "!").unwrap(),
                     Cell::Snake(s, _) => {
-                        match *s {
-                            0 => write!(self.stdout, "{}", color::Fg(color::Blue)).unwrap(),
-                            1 => write!(self.stdout, "{}", color::Fg(color::Green)).unwrap(),
-                            _ => write!(self.stdout, "{}", color::Fg(color::White)).unwrap()
-                        };
+                        self.player_color(*s);
                         if world.is_head(*s, (row, col)) {write!(self.stdout, "o").unwrap();}
                         else if world.is_tail(*s, (row, col)) {write!(self.stdout, ".").unwrap();}
                         else if world.is_body(*s, (row, col)) {write!(self.stdout, "=").unwrap();}
-                        write!(self.stdout, "{}", color::Fg(color::White)).unwrap();
+                        write!(self.stdout, "{}", color::Fg(color::Reset)).unwrap();
                     }
                 };
             }

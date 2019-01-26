@@ -1,87 +1,63 @@
 use std::{thread, time};
-use crate::model::{World, Orientation, GameEvent};
+use crate::model::{Game, TurnResult, PlayerInput, World};
 
 
 pub trait View {
     fn read_user_inputs(&mut self) -> Vec<UserAction>;
     fn draw_world(&mut self, world: &World);
-    fn player_wins(&mut self, player: usize, world: &World);
+    fn player_wins(&mut self, winners: Vec<usize>, world: &World);
     fn draw(&mut self, wolrd: &World);
 }
 
 pub enum UserAction {
     Quit,
-    Player(usize, Orientation)
+    Player(usize, PlayerInput)
 }
 
 pub struct Controller<V: View + Sized> {
-    pub world: World,
+    pub game: Game,
     pub view: V,
-    iteration: usize,
-    pub quit_on_collision: bool
+    pub quit_on_game_over: bool,
+    pub step_interval: time::Duration
 }
 
 
 impl<V: View + Sized> Controller<V> {
-    pub fn new(world: World, view: V) -> Controller<V> {
+    pub fn new(game: Game, view: V) -> Controller<V> {
         Controller {
-            world: world,
+            game: game,
             view: view,
-            iteration: 0,
-            quit_on_collision: true
+            quit_on_game_over: true,
+            step_interval: time::Duration::from_millis(1000/2)
         }
     }
     pub fn run_loop(&mut self){
         self.view.read_user_inputs(); // drop any user input
-        self.view.draw_world(&self.world);
+        self.view.draw_world(&self.game.world);
         thread::sleep(time::Duration::from_millis(1000/1));
-        let mut directions = vec![Orientation::Down; self.world.player_count()];
+        let mut directions = vec![PlayerInput::DoNothing; self.game.world.player_count()];
         loop{
-            for i in 0..self.world.player_count() {
-                directions[i] = self.world.snake_direction(self.world.snakes[i].head);
-            }
+            // read world state
             let actions = self.view.read_user_inputs();
-            if self.iteration % 16 == 0 && self.world.available_snacks() < 2 {
-                self.world.place_snack_randomly((2*self.iteration)%3+1).unwrap();
-            }
             for a in actions {
                 match a {
                     UserAction::Quit => return,
                     UserAction::Player(pid, dir) => directions[pid] = dir
                 }
             }
-            // Physics
-            let events = self.world.advance(&directions);
+            // run game step
+            let turn_result = self.game.advance(&directions);
             // Display on screen
-            self.view.draw_world(&self.world);
-            let mut players_collided = vec![false; self.world.player_count()];
-            for e in events {
-                match e {
-                    GameEvent::Collision(s, _) => players_collided[s] = true,
-                    _ => ()
-                };
+            self.view.draw_world(&self.game.world);
+            let stop = match turn_result {
+                TurnResult::Ok => false,
+                TurnResult::Draw => {self.view.draw(&self.game.world); self.quit_on_game_over},
+                TurnResult::GameOver(winners, _losers) => {self.view.player_wins(winners, &self.game.world); self.quit_on_game_over}
+            };
+            if stop {
+                return
             }
-            let all_collided = players_collided.iter().fold(true, |sum, x| sum && *x);
-            let some_collided = players_collided.iter().fold(false, |sum, x| sum || *x);
-            if all_collided {
-                self.view.draw(&self.world);
-                if self.quit_on_collision {
-                    return;
-                }
-            }
-            else if some_collided {
-                // TODO: only for exactly two players
-                if players_collided[0] {
-                    self.view.player_wins(1, &self.world);
-                } else {
-                    self.view.player_wins(0, &self.world);
-                }
-                if self.quit_on_collision {
-                    return;
-                }
-            }
-            thread::sleep(time::Duration::from_millis(1000/2));
-            self.iteration += 1;
+            thread::sleep(self.step_interval);
         } 
     }
 }
