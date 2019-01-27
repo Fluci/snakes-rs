@@ -8,7 +8,8 @@ type Pos = (usize, usize);
 pub struct Snake {
     pub head: Pos,
     pub tail: Pos,
-    pub pending_growth: usize
+    pub pending_growth: usize,
+    pub length: usize
 }
 
 impl Snake {
@@ -16,7 +17,8 @@ impl Snake {
         Snake {
             head: head,
             tail: tail,
-            pending_growth: 0
+            pending_growth: 0,
+            length: 2
         }
     }
 }

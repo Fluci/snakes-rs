@@ -6,17 +6,29 @@ use super::{Grid, Cell, Snake, tuple_from_position, Position, Orientation};
 
 pub type Player = usize;
 
+#[derive(Clone)]
 pub enum GameEvent {
     Collision(Player, (isize, isize)), // position of collision
     FoodConsumed(Player, usize) // growth value
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TurnResult {
+    GameOver,
+    Draw, // nobody wins, nobody loses
+    Ok // nothing bad happened, game goes on
+}
+
+#[derive(Clone)]
 pub struct World {
     pub snakes: Vec<Snake>,
     pub grid: Grid<Cell>,
     events: Vec<GameEvent>,
     available_snacks: usize,
-    pub wall_collision: bool
+    pub wall_collision: bool,
+    pub turn_result: TurnResult,
+    pub winners: Vec<usize>,
+    pub losers: Vec<usize>
 }
 
 impl World {
@@ -36,7 +48,10 @@ impl World {
             grid: grid,
             events: Vec::new(),
             available_snacks: 0,
-            wall_collision: false
+            wall_collision: false,
+            turn_result: TurnResult::Ok,
+            winners: Vec::new(),
+            losers: Vec::new()
         }
     }
     pub fn available_snacks(&self) -> usize {
@@ -163,6 +178,7 @@ impl World {
             self.grid.set(snake.tail, Cell::Snake(s, next_direction));
         } else {
             snake.pending_growth -= 1;
+            snake.length += 1;
         }
         self.snakes[s] = snake;
         debug_assert!(match self.grid.get(self.snakes[s].head) {Cell::Snake(ss, _) => *ss == s, _ => false});

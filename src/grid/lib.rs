@@ -3,4 +3,5 @@ extern crate rand;
 
 pub mod model;
 pub mod view;
+pub mod ai;
 

@@ -12,6 +12,10 @@ path = "src/grid/lib.rs"
 name = "play"
 path = "src/play/main.rs"
 
+[[bin]]
+name = "learn"
+path = "src/learn/main.rs"
+
 [dependencies]
 termion = "1.5.1"
 rand = "0.6.4"

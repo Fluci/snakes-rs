@@ -1,4 +1,4 @@
-use super::{World, Orientation, GameEvent};
+use super::{World, TurnResult, Orientation, GameEvent};
 
 #[derive(Debug, Clone, Copy)]
 pub enum PlayerInput {
@@ -6,18 +6,13 @@ pub enum PlayerInput {
     Go(Orientation)
 }
 
-#[derive(Debug, Clone)]
-pub enum TurnResult {
-    GameOver(Vec<usize>, Vec<usize>), // (winners, losers)
-    Draw, // nobody wins, nobody loses
-    Ok // nothing bad happened, game goes on
-}
-
+#[derive(Clone)]
 pub struct Game {
     pub world: World,
     iteration: usize,
     orientations: Vec<Orientation>,
-    pub lose_on_collision: bool
+    pub lose_on_collision: bool,
+    pub max_snacks: usize
 }
 
 impl Game {
@@ -26,14 +21,20 @@ impl Game {
             world: world,
             iteration: 0,
             orientations: Vec::new(),
-            lose_on_collision: true
+            lose_on_collision: true,
+            max_snacks: 2
         }
     }
-    pub fn advance(&mut self, directions: &Vec<PlayerInput>) -> TurnResult {
+    pub fn iteration(&self) -> usize {
+        self.iteration
+    }
+    pub fn advance(&mut self, directions: &Vec<PlayerInput>) {
         // make sure all invariants with the world hold
         if self.orientations.len() < self.world.player_count() {
             self.orientations = vec![Orientation::Down; self.world.player_count()];
         }
+        self.world.winners.clear();
+        self.world.losers.clear();
         // read world state for default behavior
         for i in 0..self.world.player_count() {
             self.orientations[i] = self.world.snake_direction(self.world.snakes[i].head);
@@ -49,7 +50,7 @@ impl Game {
         let events = self.world.advance(&self.orientations);
         // Game events
         // TODO: could be more exciting ...
-        if self.iteration % 16 == 0 && self.world.available_snacks() < 2 {
+        if self.iteration % 16 == 0 && self.world.available_snacks() < self.max_snacks {
             self.world.place_snack_randomly((2*self.iteration)%3+1).unwrap();
         }
         // Apply game rules
@@ -62,8 +63,9 @@ impl Game {
         }
         let all_collided = players_collided.iter().fold(true, |sum, x| sum && *x);
         let some_collided = players_collided.iter().fold(false, |sum, x| sum || *x);
-        if self.lose_on_collision && all_collided {
-            return TurnResult::Draw;
+        if self.lose_on_collision && all_collided && self.world.snakes.len() > 1 {
+            self.world.turn_result = TurnResult::Draw;
+            return
         }
         else if self.lose_on_collision && some_collided {
             let mut winners = Vec::new();
@@ -75,10 +77,19 @@ impl Game {
                     losers.push(i);
                 }
             }
-            return TurnResult::GameOver(winners, losers);
+            self.world.winners = winners;
+            self.world.losers = losers;
+            self.world.turn_result = TurnResult::GameOver;
+            return
+        }
+        // winn if there's hardly any space left
+        if self.world.snakes.len() == 1 && self.world.snakes[0].length >= (self.world.grid.rows()-1) * (self.world.grid.cols()-1){
+            self.world.winners.push(0);
+            self.world.turn_result = TurnResult::GameOver;
+            return 
         }
         self.iteration += 1;
-        TurnResult::Ok
+        self.world.turn_result = TurnResult::Ok
     }
 }
 

@@ -6,8 +6,6 @@ use crate::model::{Game, TurnResult, PlayerInput, World};
 pub trait View {
     fn read_user_inputs(&mut self) -> Vec<UserAction>;
     fn draw_world(&mut self, world: &World);
-    fn player_wins(&mut self, winners: Vec<usize>, world: &World);
-    fn draw(&mut self, wolrd: &World);
 }
 
 pub enum UserAction {
@@ -47,13 +45,14 @@ impl<V: View + Sized> Controller<V> {
                 }
             }
             // run game step
-            let turn_result = self.game.advance(&directions);
+            self.game.advance(&directions);
+            let turn_result = self.game.world.turn_result;
             // Display on screen
             self.view.draw_world(&self.game.world);
             let stop = match turn_result {
                 TurnResult::Ok => false,
-                TurnResult::Draw => {self.view.draw(&self.game.world); self.quit_on_game_over},
-                TurnResult::GameOver(winners, _losers) => {self.view.player_wins(winners, &self.game.world); self.quit_on_game_over}
+                TurnResult::Draw => {self.view.draw_world(&self.game.world); self.quit_on_game_over},
+                TurnResult::GameOver => {self.view.draw_world(&self.game.world); self.quit_on_game_over}
             };
             if stop {
                 return

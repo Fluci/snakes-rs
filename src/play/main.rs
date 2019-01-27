@@ -1,7 +1,4 @@
-extern crate termion;
-extern crate rand;
 extern crate gridsnakes;
-
 
 use gridsnakes::view::{Controller, TermionView};
 use gridsnakes::model::{Game, World};

@@ -1,5 +1,6 @@
 use super::Position;
 
+#[derive(Debug, Clone)]
 pub struct Grid<T> {
     rows: usize,
     cols: usize,
