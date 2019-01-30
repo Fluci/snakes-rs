@@ -19,3 +19,4 @@ path = "src/learn/main.rs"
 [dependencies]
 termion = "1.5.1"
 rand = "0.6.4"
+clap = "2"

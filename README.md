@@ -4,6 +4,27 @@ During an evening, I and my sister discussed, how efficient one could implement 
 
 I've added an additional `ai` module as play ground for some game agent experiments.
 
+## How to run
+
+To run in single player mode:
+
+```bash
+cargo run --bin play
+```
+
+Run for two players:
+
+```bash
+cargo run --bin play -- -m
+```
+(Controls: arrow keys and wasd)
+
+Run agent:
+
+```bash
+cargo run --bin learn
+```
+
 ## Pending Tasks
 
 - Add stones

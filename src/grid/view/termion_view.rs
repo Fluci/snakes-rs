@@ -44,11 +44,12 @@ impl TermionView {
                     Cell::Food(2) => write!(self.stdout, "^").unwrap(),
                     Cell::Food(_) => write!(self.stdout, "A").unwrap(),
                     Cell::Stone(_) => write!(self.stdout, "!").unwrap(),
-                    Cell::Snake(s, _) => {
+                    Cell::Snake(s, d) => {
                         self.player_color(*s);
                         if world.is_head(*s, (row, col)) {write!(self.stdout, "o").unwrap();}
                         else if world.is_tail(*s, (row, col)) {write!(self.stdout, ".").unwrap();}
-                        else if world.is_body(*s, (row, col)) {write!(self.stdout, "=").unwrap();}
+                        else if world.is_body(*s, (row, col)) && (*d == Orientation::Up || *d == Orientation::Down) {write!(self.stdout, "|").unwrap();}
+                        else if world.is_body(*s, (row, col)) && (*d == Orientation::Left || *d == Orientation::Right) {write!(self.stdout, "=").unwrap();}
                         write!(self.stdout, "{}", color::Fg(color::Reset)).unwrap();
                     }
                 };

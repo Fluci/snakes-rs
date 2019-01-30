@@ -41,7 +41,7 @@ impl<V: View + Sized> Controller<V> {
             for a in actions {
                 match a {
                     UserAction::Quit => return,
-                    UserAction::Player(pid, dir) => directions[pid] = dir
+                    UserAction::Player(pid, dir) => if pid < directions.len() {directions[pid] = dir}
                 }
             }
             // run game step
