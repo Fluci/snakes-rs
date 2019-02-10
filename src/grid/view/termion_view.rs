@@ -70,9 +70,9 @@ impl TermionView {
         } else {
             self.player_color(0);
             if world.winners.is_empty() {
-                write!(self.stdout, "Loss! Reached length: {}\n\r{}", world.snakes[0].length, color::Fg(color::Reset));
+                write!(self.stdout, "Loss! Reached length: {}\n\r{}", world.snakes[0].length, color::Fg(color::Reset)).unwrap();
             } else {
-                write!(self.stdout, "Win! Reached length: {}\n\r{}", world.snakes[0].length, color::Fg(color::Reset));
+                write!(self.stdout, "Win! Reached length: {}\n\r{}", world.snakes[0].length, color::Fg(color::Reset)).unwrap();
             }
         }
     }

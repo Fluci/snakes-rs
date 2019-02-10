@@ -7,8 +7,8 @@ use std::{thread, time};
 
 fn main(){
     let size = 10;
-    let snakes = 1;
-    let mut game = Game::new(World::new(size, size, snakes));
+    let mut game = Game::new(World::new(size, size));
+    game.world.add_snake((1,1), Orientation::Down).unwrap();
     let mut view = TermionView::new();
     let mut sleep_interval = time::Duration::from_millis(1000/10);
     view.draw_world(&game.world);

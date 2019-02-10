@@ -2,7 +2,7 @@ extern crate gridsnakes;
 extern crate clap;
 
 use gridsnakes::view::{Controller, TermionView};
-use gridsnakes::model::{Game, World};
+use gridsnakes::model::{Game, World, Orientation};
 use clap::{App, Arg};
 
 
@@ -34,7 +34,10 @@ fn main() {
     };
     let snacks = match matches.value_of("apples") {Some(v) => match v.parse::<usize>() {Ok(n) => n, _ => (size*size/100+1)}, _ => (size*size/100 + 1)};
     let walls_enabled = match matches.occurrences_of("walls") {1 => true, _ => false};
-    let mut controller = Controller::new(Game::new(World::new(size, size, snakes)), TermionView::new());
+    let mut controller = Controller::new(Game::new(World::new(size, size)), TermionView::new());
+    for i in 0..snakes {
+        controller.game.world.add_snake((1, (i*4+2)%size), Orientation::Down).unwrap();
+    }
     controller.game.max_snacks = snacks;
     controller.game.world.wall_collision = walls_enabled;
     controller.run_loop();

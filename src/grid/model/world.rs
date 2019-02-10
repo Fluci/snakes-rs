@@ -32,20 +32,12 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(rows: usize, cols: usize, snakes: usize) -> World {
+    pub fn new(rows: usize, cols: usize) -> World {
         debug_assert!(2 <= rows);
         debug_assert!(1 <= cols);
-        debug_assert!(2*snakes < cols);
-        let mut grid = Grid::from_elem(Cell::Empty, rows, cols);
-        let mut snakes_vec = Vec::new();
-        for i in 0..snakes {
-            snakes_vec.push(Snake::new((1, 4*i), (0, 4*i)));
-            grid.set(snakes_vec[i].head, Cell::Snake(i, Orientation::Down));
-            grid.set(snakes_vec[i].tail, Cell::Snake(i, Orientation::Down));
-        }
         World {
-            snakes: snakes_vec,
-            grid: grid,
+            snakes: Vec::new(),
+            grid: Grid::from_elem(Cell::Empty, rows, cols),
             events: Vec::new(),
             available_snacks: 0,
             wall_collision: false,
@@ -53,6 +45,38 @@ impl World {
             winners: Vec::new(),
             losers: Vec::new()
         }
+    }
+    pub fn add_snake(&mut self, (head_row, head_col): (usize, usize), direction: Orientation) -> Result<(), ()> {
+        debug_assert!(head_row < self.grid.rows());
+        debug_assert!(head_col < self.grid.cols());
+        if direction == Orientation::Up && head_row >= self.grid.rows()-1 {
+            return Err(());
+        }
+        if direction == Orientation::Down && head_row <= 0 {
+            return Err(());
+        }
+        if direction == Orientation::Left && head_col >= self.grid.cols()-1 {
+            return Err(());
+        }
+        if direction == Orientation::Right && head_col <= 0{
+            return Err(());
+        }
+        let (tail_row, tail_col) = match direction {
+            Orientation::Up => (head_row+1, head_col),
+            Orientation::Down => (head_row-1, head_col),
+            Orientation::Left => (head_row, head_col+1),
+            Orientation::Right => (head_row, head_col-1)
+        };
+        if match self.grid.get((head_row, head_col)) {Cell::Empty => false, _ => true} {
+            return Err(());
+        }
+        if match self.grid.get((tail_row, tail_col)) {Cell::Empty => false, _ => true} {
+            return Err(());
+        }
+        self.snakes.push(Snake::new((head_row, head_col), (tail_row, tail_col)));
+        self.grid.set((head_row, head_col), Cell::Snake(self.snakes.len()-1, direction));
+        self.grid.set((tail_row, tail_col), Cell::Snake(self.snakes.len()-1, direction));
+        Ok(())
     }
     pub fn available_snacks(&self) -> usize {
         self.available_snacks

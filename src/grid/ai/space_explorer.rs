@@ -62,13 +62,13 @@ impl Agent for SpaceExplorer {
         self.snake_length = g.world.snakes[0].length;
         let scores = self.score_children(&g, self.tree_depth);
         let mut top_scores = Vec::new();
-        let mut maxScore = -1000000;
+        let mut max_score = -1000000;
         for (i, s) in scores.iter().enumerate() {
-            if maxScore < *s {
-                maxScore = *s;
+            if max_score < *s {
+                max_score = *s;
                 top_scores.clear();
             }
-            if maxScore == *s {
+            if max_score == *s {
                 top_scores.push(i);
             }
         }
