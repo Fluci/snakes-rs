@@ -22,6 +22,11 @@ fn main() {
             .long("apples")
             .value_name("APPLES")
             .help("Maximum number of apples at the same time in the world."))
+        .arg(Arg::with_name("stones")
+             .short("o")
+             .long("stones")
+             .value_name("STONES")
+             .help("Number of stones in the world."))
         .arg(Arg::with_name("walls")
             .short("w")
             .long("walls")
@@ -34,11 +39,13 @@ fn main() {
     };
     let snacks = match matches.value_of("apples") {Some(v) => match v.parse::<usize>() {Ok(n) => n, _ => (size*size/100+1)}, _ => (size*size/100 + 1)};
     let walls_enabled = match matches.occurrences_of("walls") {1 => true, _ => false};
+    let number_of_stones = match matches.value_of("stones") {Some(v) => match v.parse::<usize>() {Ok(n) => n, _ => 3}, _ => 3};
     let mut controller = Controller::new(Game::new(World::new(size, size)), TermionView::new());
     for i in 0..snakes {
         controller.game.world.add_snake((1, (i*4+2)%size), Orientation::Down).unwrap();
     }
     controller.game.max_snacks = snacks;
     controller.game.world.wall_collision = walls_enabled;
+    controller.game.world.place_stones_randomly(number_of_stones);
     controller.run_loop();
 }

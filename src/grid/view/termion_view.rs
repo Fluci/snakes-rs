@@ -43,7 +43,7 @@ impl TermionView {
                     Cell::Food(1) => write!(self.stdout, "'").unwrap(),
                     Cell::Food(2) => write!(self.stdout, "^").unwrap(),
                     Cell::Food(_) => write!(self.stdout, "A").unwrap(),
-                    Cell::Stone(_) => write!(self.stdout, "!").unwrap(),
+                    Cell::Stone => write!(self.stdout, "!").unwrap(),
                     Cell::Snake(s, d) => {
                         self.player_color(*s);
                         if world.is_head(*s, (row, col)) {write!(self.stdout, "o").unwrap();}

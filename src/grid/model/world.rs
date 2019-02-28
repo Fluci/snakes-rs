@@ -128,6 +128,38 @@ impl World {
         self.available_snacks += 1;
         Ok(())
     }
+    pub fn place_stones_randomly(&mut self, number_of_stones: usize) -> usize {
+        let mut placed = 0;
+        for _ in 0..number_of_stones {
+            placed += match self.place_stone_randomly() {
+                Ok(_) => 1,
+                Err(_) => 0
+            }
+        }
+        return placed;
+    }
+    pub fn place_stone_randomly(&mut self) -> Result<(), ()> {
+        let mut rng = rand::thread_rng();
+        for _ in 1..100 {
+            let row = rng.gen_range(0, self.grid.rows());
+            let col = rng.gen_range(0, self.grid.cols());
+            match self.place_stone((row, col)) {
+                Ok(_) => return Ok(()),
+                _ => ()
+            };
+        }
+        return Err(());
+    }
+    pub fn place_stone<P: Position + Copy>(&mut self, pos: P) -> Result<(), ()> {
+        if match self.grid.get(pos) {
+            Cell::Empty => false,
+            _ => true
+        } {
+            return Err(());
+        }
+        self.grid.set(pos, Cell::Stone);
+        Ok(())
+    }
     pub fn advance(&mut self, directions: &Vec<Orientation>) -> Vec<GameEvent> {
         self.events.clear();
         for i in 0..self.snakes.len() {
@@ -178,7 +210,7 @@ impl World {
                 }
                 return;
             },
-            Cell::Stone(_) => {
+            Cell::Stone => {
                 self.events.push(GameEvent::Collision(s, head_posi));
                 return;
             }
