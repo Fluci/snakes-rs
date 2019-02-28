@@ -15,12 +15,16 @@ pub struct TermionView {
 }
 
 impl TermionView {
-    pub fn new() -> TermionView {
-        TermionView {
+    pub fn new() -> Result<TermionView, ()> {
+        let std = match stdout().into_raw_mode() {
+            Ok(v) => v,
+            Err(_) => return Err(())
+        };
+        Ok(TermionView {
             events: termion::async_stdin().events(),
-            stdout: stdout().into_raw_mode().unwrap(),
+            stdout: std,
             players: 2
-        }
+        })
     }
 }
 
