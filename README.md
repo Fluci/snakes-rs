@@ -27,5 +27,4 @@ cargo run --bin learn
 
 ## Pending Tasks
 
-- Add stones
 - Add CLI argument parsing for settings
