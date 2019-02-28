@@ -9,6 +9,7 @@ fn main(){
     let size = 10;
     let mut game = Game::new(World::new(size, size));
     game.world.add_snake((1,1), Orientation::Down).unwrap();
+    game.world.place_stones_randomly(3);
     let mut view = TermionView::new().unwrap();
     let mut sleep_interval = time::Duration::from_millis(1000/10);
     view.draw_world(&game.world);
